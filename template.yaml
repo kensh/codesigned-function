@@ -1,0 +1,46 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  codesigned-function
+
+  Sample SAM Template for codesigned-function
+
+Globals:
+  Function:
+    Timeout: 3
+
+Parameters:
+  SigningProfileName:
+    Type: String
+    Default: SigningProfileName
+  SigningProfileVersion:
+    Type: String
+    Default: SigningProfileVersion
+
+Resources:
+  CodesignedFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: src/
+      Handler: app.lambda_handler
+      Runtime: python3.8
+      CodeSigningConfigArn: !Ref CodesignedFunctionConfig
+
+  CodesignedFunctionConfig:
+    Type: AWS::Lambda::CodeSigningConfig
+    Properties:
+      Description: "Code Signing for CodesignedFunctionConfig"
+      AllowedPublishers:
+        SigningProfileVersionArns:
+          - !Sub "arn:aws:signer:${AWS::Region}:${AWS::AccountId}:/signing-profiles/${SigningProfileName}/${SigningProfileVersion}"
+      CodeSigningPolicies:
+        UntrustedArtifactOnDeployment: "Enforce"
+
+Outputs:
+  CodesignedFunction:
+    Description: "Codesigned Lambda Function ARN"
+    Value: !GetAtt CodesignedFunction.Arn
+  CodesignedFunctionIamRole:
+    Description: "Implicit IAM Role created for Codesigned function"
+    Value: !GetAtt CodesignedFunctionRole.Arn
+
